@@ -1,0 +1,35 @@
+{
+  "name": "ulysses-node",
+  "version": "1.0.0",
+  "description": "Module for using lit.msu.ru API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/N3wSk1Y/ulysses-node.git"
+  },
+  "keywords": [
+    "ulysses"
+  ],
+  "author": "Dmitry Fedenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/N3wSk1Y/ulysses-node/issues"
+  },
+  "homepage": "https://github.com/N3wSk1Y/ulysses-node#readme",
+  "dependencies": {
+    "axios": "^0.25.0",
+    "express": "^4.17.2",
+    "follow-redirects": "^1.14.8",
+    "form-data": "^4.0.0",
+    "https": "^1.0.0",
+    "request": "^2.88.2",
+    "unirest": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/request": "^2.48.8"
+  }
+}
