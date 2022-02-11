@@ -2,7 +2,7 @@
   "name": "ulysses-node",
   "version": "1.0.0",
   "description": "Module for using lit.msu.ru API.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -25,6 +25,9 @@
     "follow-redirects": "^1.14.8",
     "form-data": "^4.0.0",
     "https": "^1.0.0",
+    "node-fetch": "^3.2.0",
+    "node-html-parser": "^5.2.0",
+    "parse": "^3.4.1",
     "request": "^2.88.2",
     "unirest": "^0.6.0"
   },
