@@ -1,3 +1,4 @@
 {
-    "AUTH_URL": "https://in.lit.msu.ru/Ulysses/login/?next=%2%2F726217%2F"
+    "AUTH_URL": "https://in.lit.msu.ru/Ulysses/login/keyword/?next=%2FUlysses%2F2021-2022%2F",
+    "COURSES_URL": "https://in.lit.msu.ru/Ulysses/2021-2022/"
 }

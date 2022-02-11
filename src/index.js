@@ -36,62 +36,79 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
+exports.Client = void 0;
 var request = require('request');
 var node_html_parser_1 = require("node-html-parser");
 var config_json_1 = require("./configs/config.json");
-var client = /** @class */ (function () {
-    function client(token) {
+var result;
+var Client = /** @class */ (function () {
+    function Client(token) {
         this.token = token;
     }
-    return client;
-}());
-// function auth() {
-//     request.get(AUTH_URL, async (error, response) => {
-//         const root = parse(response.body.toString());
-//         const csrf = await root.querySelector('input[name=csrfmiddlewaretoken]')['_attrs'].value;
-//         var options_auth = {
-//                 'method': 'POST',
-//                 'url': AUTH_URL,
-//             formData: {
-//                 'csrfmiddlewaretoken': csrf,
-//                 'password': 'meandmylit2021'
-//             }
-//         };
-//         request(options_auth, function (error, response) {
-//             if (error) throw new Error(error);
-//             console.log(response);
-//         });
-//     })
-// }
-// auth()
-function auth() {
-    var _this = this;
-    request.get(config_json_1.AUTH_URL, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
-        var root, csrf, options_auth;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    root = (0, node_html_parser_1.parse)(response.body.toString());
-                    return [4 /*yield*/, root.querySelector('input[name=csrfmiddlewaretoken]')['_attrs'].value];
-                case 1:
-                    csrf = _a.sent();
-                    options_auth = {
-                        'method': 'POST',
-                        'url': config_json_1.AUTH_URL,
-                        formData: {
-                            'csrfmiddlewaretoken': csrf,
-                            'password': 'meandmylit2021'
-                        }
-                    };
-                    request(options_auth, function (error, response) {
+    Client.prototype.getCourses = function (schoolclass) {
+        var _this = this;
+        request.get(config_json_1.AUTH_URL, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+            var c, options_auth;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
                         if (error)
                             throw new Error(error);
-                        console.log(response.toJSON());
-                        console.log(csrf);
-                    });
-                    return [2 /*return*/];
-            }
-        });
-    }); });
-}
-auth();
+                        c = response.headers['set-cookie'][0];
+                        this.csrf = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
+                        options_auth = {
+                            'method': 'POST',
+                            'url': config_json_1.AUTH_URL,
+                            headers: {
+                                'Cookie': "csrftoken=".concat(this.csrf)
+                            },
+                            form: {
+                                'csrfmiddlewaretoken': this.csrf,
+                                'password': this.token
+                            }
+                        };
+                        return [4 /*yield*/, request(options_auth, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+                                var c, options_get;
+                                var _this = this;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            if (error)
+                                                throw new Error(error);
+                                            c = response.headers['set-cookie'][1];
+                                            this.sessionid = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
+                                            options_get = {
+                                                'method': 'GET',
+                                                'url': config_json_1.COURSES_URL,
+                                                headers: {
+                                                    'Cookie': "csrftoken=".concat(this.csrf, "; sessionid=").concat(this.sessionid)
+                                                }
+                                            };
+                                            return [4 /*yield*/, request(options_get, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+                                                    var c;
+                                                    return __generator(this, function (_a) {
+                                                        c = (0, node_html_parser_1.parse)(response.toString()).querySelector("ul[class=ulysses-courses-list]");
+                                                        result = c;
+                                                        return [2 /*return*/];
+                                                    });
+                                                }); })];
+                                        case 1:
+                                            _a.sent();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        return result;
+    };
+    return Client;
+}());
+exports.Client = Client;
+var client = new Client('meandmylit2021');
+console.log(client.getCourses(8));
