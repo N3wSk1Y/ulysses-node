@@ -71,7 +71,7 @@ export class UlyssesClient {
             callback(res);
         })
     }
-
+    
     public getCourses(SchoolClass: SchoolClass, callback): void {
         this._courses(function(rez) {
             var courses: object[] = []
