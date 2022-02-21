@@ -36,79 +36,118 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.Client = void 0;
+exports.UlyssesClient = void 0;
 var request = require('request');
-var node_html_parser_1 = require("node-html-parser");
-var config_json_1 = require("./configs/config.json");
-var result;
-var Client = /** @class */ (function () {
-    function Client(token) {
+var jssoup_1 = require("jssoup");
+var UlyssesClient = /** @class */ (function () {
+    function UlyssesClient(token, years) {
         this.token = token;
+        UlyssesClient.years = years;
+        this.AUTH_URL = "https://in.lit.msu.ru/Ulysses/login/keyword/?next=%2FUlysses%2F".concat(years, "%2F");
+        this.COURSES_URL = "https://in.lit.msu.ru/Ulysses/".concat(years, "/");
     }
-    Client.prototype.getCourses = function (schoolclass) {
+    UlyssesClient.prototype._courses = function (callback) {
         var _this = this;
-        request.get(config_json_1.AUTH_URL, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+        request.get(this.AUTH_URL, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
             var c, options_auth;
             var _this = this;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
+                if (error)
+                    throw new Error(error);
+                c = response.headers['set-cookie'][0];
+                this.csrf = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
+                options_auth = {
+                    'method': 'POST',
+                    'url': this.AUTH_URL,
+                    headers: {
+                        'Cookie': "csrftoken=".concat(this.csrf)
+                    },
+                    form: {
+                        'csrfmiddlewaretoken': this.csrf,
+                        'password': this.token
+                    }
+                };
+                request(options_auth, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+                    var c, options_get;
+                    var _this = this;
+                    return __generator(this, function (_a) {
                         if (error)
                             throw new Error(error);
-                        c = response.headers['set-cookie'][0];
-                        this.csrf = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
-                        options_auth = {
-                            'method': 'POST',
-                            'url': config_json_1.AUTH_URL,
+                        c = response.headers['set-cookie'][1];
+                        this.sessionid = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
+                        options_get = {
+                            'method': 'GET',
+                            'url': this.COURSES_URL,
                             headers: {
-                                'Cookie': "csrftoken=".concat(this.csrf)
-                            },
-                            form: {
-                                'csrfmiddlewaretoken': this.csrf,
-                                'password': this.token
+                                'Cookie': "csrftoken=".concat(this.csrf, "; sessionid=").concat(this.sessionid)
                             }
                         };
-                        return [4 /*yield*/, request(options_auth, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
-                                var c, options_get;
-                                var _this = this;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            if (error)
-                                                throw new Error(error);
-                                            c = response.headers['set-cookie'][1];
-                                            this.sessionid = c.slice(c.indexOf('=') + 1, c.indexOf(';'));
-                                            options_get = {
-                                                'method': 'GET',
-                                                'url': config_json_1.COURSES_URL,
-                                                headers: {
-                                                    'Cookie': "csrftoken=".concat(this.csrf, "; sessionid=").concat(this.sessionid)
-                                                }
-                                            };
-                                            return [4 /*yield*/, request(options_get, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
-                                                    var c;
-                                                    return __generator(this, function (_a) {
-                                                        c = (0, node_html_parser_1.parse)(response.toString()).querySelector("ul[class=ulysses-courses-list]");
-                                                        result = c;
-                                                        return [2 /*return*/];
-                                                    });
-                                                }); })];
-                                        case 1:
-                                            _a.sent();
-                                            return [2 /*return*/];
-                                    }
-                                });
-                            }); })];
-                    case 1:
-                        _a.sent();
+                        request(options_get, function (error, response) { return __awaiter(_this, void 0, void 0, function () {
+                            var result;
+                            return __generator(this, function (_a) {
+                                result = new jssoup_1["default"](response.body.toString());
+                                callback(result);
+                                return [2 /*return*/];
+                            });
+                        }); });
                         return [2 /*return*/];
-                }
+                    });
+                }); });
+                return [2 /*return*/];
             });
         }); });
-        return result;
     };
-    return Client;
+    UlyssesClient.prototype.getTeachers = function (callback) {
+        this._courses(function (rez) {
+            var teachers = [];
+            for (var x = 10; x < rez.querySelectorAll("li").length; x++) {
+                try {
+                    teachers.push(rez.querySelectorAll("li")[x].childNodes[2].rawText.replace('(', '').replace(')', '').trim());
+                }
+                catch (_a) {
+                    break;
+                }
+            }
+            var res = teachers.filter(function (elem, pos) {
+                return teachers.indexOf(elem) == pos;
+            });
+            callback(res);
+        });
+    };
+    UlyssesClient.prototype.getCourses = function (SchoolClass, callback) {
+        this._courses(function (rez) {
+            var courses = [];
+            var parsed = rez.findAll('li');
+            for (var x = 0; x < parsed.length; x++) {
+                try {
+                    if (parsed[x].parent.previousElement._text.slice(0, 2).trim() == SchoolClass) {
+                        var text = parsed[x].text.trim();
+                        if (text.replace('(', '').includes('(')) {
+                            var subject = text.slice(0, text.indexOf('('));
+                            var teacher = text.slice(text.indexOf(')') + 3, -1);
+                        }
+                        else {
+                            var subject = text.slice(0, text.indexOf('('));
+                            var teacher = text.slice(text.indexOf('(') + 1, text.indexOf(')'));
+                        }
+                        courses.push({
+                            subject: subject.trim(),
+                            teacher: teacher.trim(),
+                            link: "https://in.lit.msu.ru/Ulysses/".concat(UlyssesClient.years, "/").concat(parsed[x].nextElement.attrs.href)
+                        });
+                    }
+                }
+                catch (_a) {
+                    continue;
+                }
+            }
+            callback(courses);
+        });
+    };
+    return UlyssesClient;
 }());
-exports.Client = Client;
-var client = new Client('meandmylit2021');
-console.log(client.getCourses(8));
+exports.UlyssesClient = UlyssesClient;
+var client = new UlyssesClient('meandmylit2021', '2021-2022');
+client.getCourses(8, function (result) {
+    console.log(result);
+});
